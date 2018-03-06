@@ -1,11 +1,12 @@
 import React from 'react';
-import { StyleSheet, StatusBar } from 'react-native';
-import { View, Text } from 'native-base';
+import { View } from 'native-base';
+import { ScrollView, StyleSheet, StatusBar } from 'react-native';
 
 import TodoModel from './../api/todos';
 import Header from '../components/Header';
 import COLORS from '../constants/Colors';
 import AddTodoButton from './AddTodoButton';
+import AddTodo from './AddTodo';
 
 const styles = StyleSheet.create({
     container: {
@@ -41,14 +42,25 @@ export default class TodosContainer extends React.Component {
 
     render() {
         return (
-            <View style={styles.container}>
-                <Header />
-                <StatusBar backgroundColor={COLORS.primary} barStyle="light-content" />
-                <View style={styles.center}>
-                    <Text>Todos Container</Text>
-                    <AddTodoButton onPress={() => this.setState({ addingTodo: true })}/>
-                </View>
+      <View style={styles.container}>
+        <Header />
+        <StatusBar backgroundColor={COLORS.primary} barStyle="light-content" />
+        <ScrollView>
+          {this.state.addingTodo ? (
+            <View style={styles.row}>
+              <AddTodo
+                onAdd={(todo) => {
+                  this.setState({ addingTodo: false });
+                  this.api.add(todo);
+                }}
+                onCancelDelete={() => this.setState({ addingTodo: false })}
+                onBlur={() => this.setState({ addingTodo: false })}
+              />
             </View>
-        );
-    }
+          ) : null}
+        </ScrollView>
+        <AddTodoButton onPress={() => this.setState({ addingTodo: true })} />
+      </View>
+    );
+  }
 }
