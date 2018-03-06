@@ -2,6 +2,6 @@
 export default {
     url: 'https://scalr.api.appbase.io',
     app: 'todos-native-f',
-    credentials: 'hEHve1gZX:f224113a-66fa-40ea-bda2-4236de91767c',
+    credentials: 'zkcTnMWXx:597b6149-0716-4484-a211-45711f6f0e93',
     type: 'todos-native',
 };

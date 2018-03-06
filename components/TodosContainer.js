@@ -1,51 +1,101 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+import { ScrollView, StyleSheet, FlatList, StatusBar, Platform } from 'react-native';
 import { View } from 'native-base';
-import { ScrollView, StyleSheet, StatusBar } from 'react-native';
+import { ReactiveList } from '@appbaseio/reactivesearch-native';
 
-import TodoModel from './../api/todos';
-import Header from '../components/Header';
+import Utils from '../utils';
+import CONSTANTS from '../constants';
 import COLORS from '../constants/Colors';
-import AddTodoButton from './AddTodoButton';
-import AddTodo from './AddTodo';
+import Header from '../components/Header';
+import TodoModel from './../api/todos';
+import AddTodo from '../components/AddTodo';
+import AddTodoButton from '../components/AddTodoButton';
+import TodoItem from '../components/TodoItem';
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#ffffff',
-    },
-    row: {
-        top: 15,
-        flex: 1,
-        width: '100%',
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-    },
-    center: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
+  row: {
+    top: 15,
+    flex: 1,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
 });
 
-// will render todos based on the active screen: all, active or completed
-export default class TodosContainer extends React.Component {
-    state = {
-        addingTodo: false,
-    };
+const propTypes = {
+  screen: PropTypes.oneOf([CONSTANTS.ALL, CONSTANTS.ACTIVE, CONSTANTS.COMPLETED]).isRequired,
+};
 
-    componentDidMount() {
-        // includes the methods for creation, updation and deletion
-        this.api = new TodoModel('react-todos');
+export default class TodosContainer extends React.Component {
+  state = {
+    addingTodo: false,
+  };
+
+  componentDidMount() {
+    this.api = new TodoModel('react-todos');
+  }
+
+  onAllData = (todos, streamData) => {
+    // merge streaming todos data along with current todos
+    const todosData = Utils.mergeTodos(todos, streamData);
+
+    // filter data based on "screen": [All | Active | Completed]
+    const filteredData = this.filterTodosData(todosData);
+
+    return (
+      <FlatList
+        style={{ width: '100%', top: 15 }}
+        data={filteredData}
+        keyExtractor={item => item._id}
+        renderItem={({ item: todo }) => (
+          <TodoItem todo={todo} onUpdate={this.api.update} onDelete={this.api.destroy} />
+        )}
+      />
+    );
+  };
+
+  filterTodosData = (todosData) => {
+    const { screen } = this.props;
+
+    switch (screen) {
+      case CONSTANTS.ALL:
+        return todosData;
+      case CONSTANTS.ACTIVE:
+        return todosData.filter(todo => !todo.completed);
+      case CONSTANTS.COMPLETED:
+        return todosData.filter(todo => todo.completed);
     }
 
-    render() {
-        return (
-      <View style={styles.container}>
+    return todosData;
+  };
+
+  render() {
+    const isAndroid = Platform.OS === 'android';
+    return (
+      <View style={{ flex: 1 }}>
         <Header />
-        <StatusBar backgroundColor={COLORS.primary} barStyle="light-content" />
+        {isAndroid ? (
+          <StatusBar backgroundColor={COLORS.primary} barStyle="light-content" />
+        ) : (
+          <StatusBar backgroundColor={COLORS.primary} barStyle="dark-content" />
+        )}
         <ScrollView>
+          <ReactiveList
+            componentId="ReactiveList"
+            defaultQuery={() => ({
+              query: {
+                match_all: {},
+              },
+            })}
+            stream
+            onAllData={this.onAllData}
+            dataField="title"
+            showResultStats={false}
+            pagination={false}
+          />
           {this.state.addingTodo ? (
             <View style={styles.row}>
               <AddTodo
@@ -64,3 +114,5 @@ export default class TodosContainer extends React.Component {
     );
   }
 }
+
+TodosContainer.propTypes = propTypes;
