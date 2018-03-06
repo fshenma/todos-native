@@ -5,6 +5,7 @@ import { View, Text } from 'native-base';
 import TodoModel from './../api/todos';
 import Header from '../components/Header';
 import COLORS from '../constants/Colors';
+import AddTodoButton from './AddTodoButton';
 
 const styles = StyleSheet.create({
     container: {
@@ -29,6 +30,10 @@ const styles = StyleSheet.create({
 
 // will render todos based on the active screen: all, active or completed
 export default class TodosContainer extends React.Component {
+    state = {
+        addingTodo: false,
+    };
+
     componentDidMount() {
         // includes the methods for creation, updation and deletion
         this.api = new TodoModel('react-todos');
@@ -41,6 +46,7 @@ export default class TodosContainer extends React.Component {
                 <StatusBar backgroundColor={COLORS.primary} barStyle="light-content" />
                 <View style={styles.center}>
                     <Text>Todos Container</Text>
+                    <AddTodoButton onPress={() => this.setState({ addingTodo: true })}/>
                 </View>
             </View>
         );
